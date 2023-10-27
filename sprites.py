@@ -16,11 +16,12 @@ class Player(Sprite):
         # self.image.fill(GREEN)
         # use an image for player sprite...
         self.game = game
-        self.image = pg.image.load(os.path.join(img_folder, 'theBell.png')).convert()
+        self.image = pg.image.load(os.path.join(img_folder, 'flyer.png')).convert()
         self.image.set_colorkey(BLACK)
+        self.image = pg.transform.scale(self.image, (self.image.get_width() * 0.5, self.image.get_height() * 0.5))
         self.rect = self.image.get_rect()
         self.rect.center = (0, 0)
-        self.pos = vec(WIDTH/2, HEIGHT/2)
+        self.pos = vec(WIDTH/3, HEIGHT/2)
         self.vel = vec(0,0)
         self.acc = vec(0,0)
         self.jumping = False
@@ -33,10 +34,7 @@ class Player(Sprite):
         if not keys[pg.K_SPACE]:
             self.jumping = False
     def jump(self):
-        hits = pg.sprite.spritecollide(self, self.game.ground, False)
-        if hits:
-            print("i can jump")
-            self.vel.y = -PLAYER_JUMP
+        self.vel.y = -PLAYER_JUMP
     def update(self):
         self.acc = vec(0,PLAYER_GRAV)
         self.controls()
@@ -44,53 +42,57 @@ class Player(Sprite):
         self.vel += self.acc
         self.pos += self.vel + 0.5 * self.acc
         self.rect.midbottom = self.pos
-
-# platforms
+        
+        if self.rect.top > HEIGHT:
+            self.game.dead = True
+        self.zorder = 1
 
 class Cloud(Sprite):
-    def __init__(self, x, y, w, h, speed):
+    def __init__(self, x, y, type, speed, game):
         Sprite.__init__(self)
-        self.image = pg.Surface((w, h))
-        self.image.fill(WHITE)
+        self.image = pg.image.load(os.path.join(img_folder, type)).convert()
+        self.image.set_colorkey(BLACK)
+        self.image = pg.transform.scale(self.image, (self.image.get_width() * 0.75, self.image.get_height() * 0.75))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.speed = 0
         self.speed = speed
+        self.game = game
 
     def update(self):
         self.rect.x -= self.speed
-
-class Ground(Sprite):
-    def __init__(self, x, y, w, h):
-        Sprite.__init__(self)
-        self.image = pg.Surface((w, h))
-        self.image.fill(GREEN)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.speed = 0
-        self.speed = 5
-
-    def update(self):
-        pass
+        self.zorder = -1
+        if self.rect.right < 0:
+            self.die()
+            
+            
+    def die(self):
+        self.kill()
+        self.game.cloud_count -= 1
 
 class Target(Sprite):
-    def __init__(self, x, y, w, h, vel, kind):
+    def __init__(self, x, y, vel, kind, game):
         Sprite.__init__(self)
-        self.image = pg.Surface((w, h))
-        self.image.fill(D62628)
+        self.image = pg.image.load(os.path.join(img_folder, 'jump_arrow.png')).convert()
+        self.image.set_colorkey(BLACK)
+        self.image = pg.transform.scale(self.image, (self.image.get_width() * 0.75, self.image.get_height() * 0.75))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.kind = kind
         self.pos = vec(x, y)
-        self.vel = vec(vel,0)
+        self.vel = vec(-vel,0)
+        self.game = game
 
     def update(self):
-        if self.pos.x < 0:
-            self.kill()
+        if self.rect.right < 0:
+            self.die()
         
         self.pos += self.vel
         self.rect.midbottom = self.pos
+    
+    def die(self):
+        self.kill()
+        self.game.target_count -= 1
         
