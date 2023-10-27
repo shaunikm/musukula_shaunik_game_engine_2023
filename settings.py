@@ -2,6 +2,7 @@
 # Content from Chris Bradfield; Kids Can Code
 # KidsCanCode - Game Development with Pygame video series
 # Video link: https://youtu.be/OmlQ0XCvIn0 
+import random
 
 # game settings 
 WIDTH = 1024
@@ -25,9 +26,4 @@ D62628 = (214, 40, 40)
 FCBF49 = (252, 191, 73)
 F77F00 = (247, 127, 0)
 
-
-PLATFORM_LIST = [(0, HEIGHT - 40, WIDTH, 40, "normal"),
-                 (WIDTH / 2 - 50, HEIGHT * 3 / 4, 100, 20,"normal"),
-                 (125, HEIGHT - 350, 100, 20, "moving"),
-                 (222, 200, 100, 20, "normal"),
-                 (175, 100, 50, 20, "normal")]
+CLOUD_LIST = [(60, 40), (50, 40), (30, 20)]

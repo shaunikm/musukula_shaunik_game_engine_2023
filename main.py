@@ -38,23 +38,29 @@ class Game:
     
     def new(self):
         # create a group for all sprites
-        self.score = 100
+        self.jumps = 5 
         self.all_sprites = pg.sprite.Group()
-        self.all_platforms = pg.sprite.Group()
+        self.all_clouds = pg.sprite.Group()
+        self.ground = pg.sprite.Group()
         self.all_mobs = pg.sprite.Group()
         # instantiate classes
         self.player = Player(self)
         # add instances to groups
         self.all_sprites.add(self.player)
 
-        for p in PLATFORM_LIST:
-            # instantiation of the Platform class
-            plat = Platform(*p)
-            self.all_sprites.add(plat)
-            self.all_platforms.add(plat)
+        # instantiation of the Platform class
+        ground = Ground(0, HEIGHT - 40, WIDTH, 40)
+        self.all_sprites.add(ground)
+        self.ground.add(ground)
+
+        for c in range(0, 10):
+            cloud = random.choice(CLOUD_LIST)
+            c = Cloud(random.randint(0, WIDTH), random.randint(0, HEIGHT-40), cloud[0], cloud[1], 2)
+            self.all_sprites.add(c)
+            self.all_clouds.add(c)
 
         for m in range(0,10):
-            m = Mob(randint(0, WIDTH), randint(0, HEIGHT/2), 20, 20, "normal")
+            m = Target(WIDTH, randint(0, HEIGHT), 20, 20, -10, "normal")
             self.all_sprites.add(m)
             self.all_mobs.add(m)
 
@@ -73,21 +79,15 @@ class Game:
 
         # this is what prevents the player from falling through the platform when falling down...
         if self.player.vel.y > 0:
-            hits = pg.sprite.spritecollide(self.player, self.all_platforms, False)
+            hits = pg.sprite.spritecollide(self.player, self.ground, False)
             if hits:
                 self.player.pos.y = hits[0].rect.top
                 self.player.vel.y = 0
-                self.player.vel.x = hits[0].speed*1.5
-            hits = pg.sprite.spritecollide(self.player, self.all_mobs, True)
-            if hits:
-                print("ouch")
-                if self.score > 0:
-                    self.score -= 1
 
                     
          # this prevents the player from jumping up through a platform
         if self.player.vel.y < 0:
-            hits = pg.sprite.spritecollide(self.player, self.all_platforms, False)
+            hits = pg.sprite.spritecollide(self.player, self.ground, False)
             if hits:
                 if self.player.rect.bottom >= hits[0].rect.top - 1:
                     self.player.rect.top = hits[0].rect.bottom
@@ -105,10 +105,10 @@ class Game:
     def draw(self):
         ############ Draw ################
         # draw the background screen
-        self.screen.fill(FCBF49)
+        self.screen.fill(SKYBLUE)
         # draw all sprites
         self.all_sprites.draw(self.screen)
-        self.draw_text("Score: " + str(self.score), 22, WHITE, WIDTH/2, HEIGHT/10)
+        self.draw_text("Jumps: " + str(self.jumps), 22, WHITE, WIDTH/2, HEIGHT/10)
         # buffer - after drawing everything, flip display
         pg.display.flip()
     

@@ -1,6 +1,5 @@
 import pygame as pg
 from pygame.sprite import Sprite
-
 from pygame.math import Vector2 as vec
 import os
 from settings import *
@@ -23,53 +22,61 @@ class Player(Sprite):
         self.rect.center = (0, 0)
         self.pos = vec(WIDTH/2, HEIGHT/2)
         self.vel = vec(0,0)
-        self.acc = vec(0,0) 
+        self.acc = vec(0,0)
+        self.jumping = False
     def controls(self):
         keys = pg.key.get_pressed()
-        if keys[pg.K_a]:
-            self.acc.x = -5
-        if keys[pg.K_d]:
-            self.acc.x = 5
-        if keys[pg.K_SPACE]:
+        if keys[pg.K_SPACE] and self.game.jumps > 0 and not self.jumping:
+            self.game.jumps -= 1
+            self.jumping = True
             self.jump()
+        if not keys[pg.K_SPACE]:
+            self.jumping = False
     def jump(self):
-        hits = pg.sprite.spritecollide(self, self.game.all_platforms, False)
+        hits = pg.sprite.spritecollide(self, self.game.ground, False)
         if hits:
             print("i can jump")
             self.vel.y = -PLAYER_JUMP
     def update(self):
         self.acc = vec(0,PLAYER_GRAV)
         self.controls()
-        # if friction - apply here
-        self.acc.x += self.vel.x * -PLAYER_FRIC
-        # self.acc.y += self.vel.y * -0.3
-        # equations of motion
+
         self.vel += self.acc
         self.pos += self.vel + 0.5 * self.acc
         self.rect.midbottom = self.pos
 
 # platforms
 
-class Platform(Sprite):
-    def __init__(self, x, y, w, h, category):
+class Cloud(Sprite):
+    def __init__(self, x, y, w, h, speed):
         Sprite.__init__(self)
         self.image = pg.Surface((w, h))
-        self.image.fill(F77F00)
+        self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.category = category
         self.speed = 0
-        if self.category == "moving":
-            self.speed = 5
-    def update(self):
-        if self.category == "moving":
-            self.rect.x += self.speed
-            if self.rect.x + self.rect.w > WIDTH or self.rect.x < 0:
-                self.speed = -self.speed
+        self.speed = speed
 
-class Mob(Sprite):
-    def __init__(self, x, y, w, h, kind):
+    def update(self):
+        self.rect.x -= self.speed
+
+class Ground(Sprite):
+    def __init__(self, x, y, w, h):
+        Sprite.__init__(self)
+        self.image = pg.Surface((w, h))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed = 0
+        self.speed = 5
+
+    def update(self):
+        pass
+
+class Target(Sprite):
+    def __init__(self, x, y, w, h, vel, kind):
         Sprite.__init__(self)
         self.image = pg.Surface((w, h))
         self.image.fill(D62628)
@@ -77,8 +84,13 @@ class Mob(Sprite):
         self.rect.x = x
         self.rect.y = y
         self.kind = kind
-        self.pos = vec(WIDTH/2, HEIGHT/2)
+        self.pos = vec(x, y)
+        self.vel = vec(vel,0)
 
     def update(self):
-        pass
+        if self.pos.x < 0:
+            self.kill()
+        
+        self.pos += self.vel
+        self.rect.midbottom = self.pos
         
