@@ -1,18 +1,7 @@
-# content from kids can code: http://kidscancode.org/blog/
-
-# GameDesign:
-# Goals: Get to the exit at the top of the level
-# Rules: Can't hit any mobs
-# Feedback: WASD for to move around
-# Freedom: moving around
-
-# Feature Goals:
-# Have mobs that move around
-# Have obstacles that bounce the player backwards from the point of collision
+# This file was created by: Shaunik Musukula
 
 # import libraries and modules
 import pygame as pg
-from pygame.sprite import Sprite
 import random
 from random import randint
 import os

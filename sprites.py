@@ -1,3 +1,5 @@
+# This file was created by: Shaunik Musukula
+
 import pygame as pg
 from pygame.sprite import Sprite
 from pygame.math import Vector2 as vec
