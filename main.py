@@ -18,6 +18,7 @@ from random import randint
 import os
 from settings import *
 from sprites import *
+from math import floor
 
 vec = pg.math.Vector2
 
@@ -35,64 +36,76 @@ class Game:
         pg.display.set_caption("My Game...")
         self.clock = pg.time.Clock()
         self.running = True
+        self.start = False
+        self.dead = False
+        self.target_count = TARGET_COUNT
+        self.cloud_count = CLOUD_COUNT
     
     def new(self):
         # create a group for all sprites
-        self.jumps = 5 
+        self.jumps = 3
+        self.score = 0
         self.all_sprites = pg.sprite.Group()
         self.all_clouds = pg.sprite.Group()
-        self.ground = pg.sprite.Group()
-        self.all_mobs = pg.sprite.Group()
+        self.all_targets = pg.sprite.Group()
         # instantiate classes
+
+        for c in range(self.cloud_count):
+            cloud = random.choices(CLOUD_LIST, weights=CLOUD_WEIGHTS, k=1)[0]
+            c = Cloud(random.randint(0, WIDTH), random.randint(0, HEIGHT-40), cloud, CLOUD_SPEED, self)
+            self.all_sprites.add(c)
+            self.all_clouds.add(c)
+            
+        for t in range(self.target_count):
+            t = Target(random.randint(WIDTH-WIDTH//3, WIDTH), randint(0, HEIGHT), TARGET_SPEED + 2*self.score**(1/SPEED_FAC), "normal", self)
+            self.all_sprites.add(t)
+            self.all_targets.add(t)
+        
         self.player = Player(self)
         # add instances to groups
         self.all_sprites.add(self.player)
-
-        # instantiation of the Platform class
-        ground = Ground(0, HEIGHT - 40, WIDTH, 40)
-        self.all_sprites.add(ground)
-        self.ground.add(ground)
-
-        for c in range(0, 10):
-            cloud = random.choice(CLOUD_LIST)
-            c = Cloud(random.randint(0, WIDTH), random.randint(0, HEIGHT-40), cloud[0], cloud[1], 2)
-            self.all_sprites.add(c)
-            self.all_clouds.add(c)
-
-        for m in range(0,10):
-            m = Target(WIDTH, randint(0, HEIGHT), 20, 20, -10, "normal")
-            self.all_sprites.add(m)
-            self.all_mobs.add(m)
 
         self.run()
     
     def run(self):
         self.playing = True
+        while not self.start:
+            self.clock.tick(FPS)
+            self.events()
+            self.show_start_screen()
         while self.playing:
             self.clock.tick(FPS)
             self.events()
-            self.update()
-            self.draw()
+            if not self.dead:
+                self.update()
+                self.draw()
+            elif self.dead:
+                self.show_end_screen()
 
+    def new_target(self):
+        t = Target(WIDTH, randint(0, HEIGHT), TARGET_SPEED + 2*self.score**(1/SPEED_FAC), "normal", self)
+        self.all_sprites.add(t)
+        self.all_targets.add(t)
+        self.target_count += 1
+    
+    def new_cloud(self):
+        cloud = random.choices(CLOUD_LIST, weights=CLOUD_WEIGHTS, k=1)[0]
+        c = Cloud(WIDTH, random.randint(0, HEIGHT-40), cloud, CLOUD_SPEED, self)
+        self.all_sprites.add(c)
+        self.all_clouds.add(c)
+        self.cloud_count += 1
+    
     def update(self):
         self.all_sprites.update()
-
-        # this is what prevents the player from falling through the platform when falling down...
-        if self.player.vel.y > 0:
-            hits = pg.sprite.spritecollide(self.player, self.ground, False)
-            if hits:
-                self.player.pos.y = hits[0].rect.top
-                self.player.vel.y = 0
-
-                    
-         # this prevents the player from jumping up through a platform
-        if self.player.vel.y < 0:
-            hits = pg.sprite.spritecollide(self.player, self.ground, False)
-            if hits:
-                if self.player.rect.bottom >= hits[0].rect.top - 1:
-                    self.player.rect.top = hits[0].rect.bottom
-                    self.player.acc.y = 5
-                    self.player.vel.y = 0
+        self.score += SCORE_INC
+        
+        thits = pg.sprite.spritecollide(self.player, self.all_targets, False)
+        if thits:
+            self.jumps += 1
+            thits[0].die()
+            
+        if self.cloud_count < CLOUD_COUNT: self.new_cloud()
+        if self.target_count < TARGET_COUNT: self.new_target()
 
     def events(self):
         for event in pg.event.get():
@@ -101,6 +114,7 @@ class Game:
                 if self.playing:
                     self.playing = False
                 self.running = False
+                self.start = True
                 
     def draw(self):
         ############ Draw ################
@@ -108,10 +122,11 @@ class Game:
         self.screen.fill(SKYBLUE)
         # draw all sprites
         self.all_sprites.draw(self.screen)
-        self.draw_text("Jumps: " + str(self.jumps), 22, WHITE, WIDTH/2, HEIGHT/10)
+        self.draw_text("Jumps: " + str(self.jumps), FONT_SIZE, BLACK, WIDTH/2, HEIGHT/10)
+        self.draw_text("Score: " + str(floor(self.score)), FONT_SIZE, BLACK, WIDTH/2, HEIGHT/10+SPACING)
         # buffer - after drawing everything, flip display
         pg.display.flip()
-    
+
     def draw_text(self, text, size, color, x, y):
         font_name = pg.font.match_font('arial')
         font = pg.font.Font(font_name, size)
@@ -121,9 +136,21 @@ class Game:
         self.screen.blit(text_surface, text_rect)
 
     def show_start_screen(self):
-        pass
-    def show_go_screen(self):
-        pass
+        self.screen.fill(SKYBLUE)
+        self.draw_text("Press -enter- to start", FONT_SIZE, BLACK, WIDTH/2, HEIGHT/2)
+        keys = pg.key.get_pressed()
+        if keys[pg.K_RETURN]:
+            self.start = True
+        pg.display.flip()
+
+    def show_end_screen(self):
+        self.draw_text("You died :(", FONT_SIZE, BLACK, WIDTH/2, HEIGHT/2)
+        self.draw_text("Press -enter- to retry", FONT_SIZE, BLACK, WIDTH/2, HEIGHT/2+SPACING)
+        keys = pg.key.get_pressed()
+        if keys[pg.K_RETURN]:
+            self.dead = False
+            self.new()
+        pg.display.flip()
 
 g = Game()
 while g.running:
