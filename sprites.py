@@ -14,20 +14,21 @@ snd_folder = os.path.join(game_folder, 'sounds')
 class Player(Sprite):
     def __init__(self, game):
         Sprite.__init__(self)
-        # self.image = pg.Surface((50, 50))
-        # self.image.fill(GREEN)
-        # use an image for player sprite...
         self.game = game
+        # load player image
         self.image = pg.image.load(os.path.join(img_folder, 'flyer.png')).convert()
         self.image.set_colorkey(BLACK)
+        # resize image
         self.image = pg.transform.scale(self.image, (self.image.get_width() * 0.5, self.image.get_height() * 0.5))
         self.rect = self.image.get_rect()
         self.rect.center = (0, 0)
+        # speed/pos settings
         self.pos = vec(WIDTH/3, HEIGHT/2)
         self.vel = vec(0,0)
         self.acc = vec(0,0)
         self.jumping = False
     def controls(self):
+        # check if jumping and prevent holding space bar & spamming jump
         keys = pg.key.get_pressed()
         if keys[pg.K_SPACE] and self.game.jumps > 0 and not self.jumping:
             self.game.jumps -= 1
@@ -36,15 +37,19 @@ class Player(Sprite):
         if not keys[pg.K_SPACE]:
             self.jumping = False
     def jump(self):
+        # jump physics
         self.vel.y = -PLAYER_JUMP
     def update(self):
+        # check player movement
         self.acc = vec(0,PLAYER_GRAV)
         self.controls()
 
+        # jump physics
         self.vel += self.acc
         self.pos += self.vel + 0.5 * self.acc
         self.rect.midbottom = self.pos
         
+        # check if player has fallen to the bottom
         if self.rect.top > HEIGHT:
             self.game.dead = True
         self.zorder = 1
@@ -63,13 +68,16 @@ class Cloud(Sprite):
         self.game = game
 
     def update(self):
+        # move to the left
         self.rect.x -= self.speed
         self.zorder = -1
+        # remove if off screen
         if self.rect.right < 0:
             self.die()
             
             
     def die(self):
+        # remove, but also update the amount of clouds on screen
         self.kill()
         self.game.cloud_count -= 1
 
@@ -88,13 +96,15 @@ class Target(Sprite):
         self.game = game
 
     def update(self):
+        # remove if off screen
         if self.rect.right < 0:
             self.die()
-        
+    
         self.pos += self.vel
         self.rect.midbottom = self.pos
     
     def die(self):
+        # remove, but all update amount of targets (green arrows) on screen
         self.kill()
         self.game.target_count -= 1
         
