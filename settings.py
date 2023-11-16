@@ -24,16 +24,12 @@ FONT_SIZE = 22
 SPACING = 20
 
 # define colors
-WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SKYBLUE = (150, 200, 255)
-D62628 = (214, 40, 40)
-FCBF49 = (252, 191, 73)
-F77F00 = (247, 127, 0)
 
+# cloud variety
 CLOUD_LIST = ["serene.png",
               "disc.png",
               "furious.png"]
